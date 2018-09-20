@@ -1,0 +1,857 @@
+
+\documentclass[%
+ reprint,
+%superscriptaddress,
+%groupedaddress,
+%unsortedaddress,
+%runinaddress,
+%frontmatterverbose, 
+%preprint,
+%showpacs,preprintnumbers,
+%nofootinbib,
+%nobibnotes,
+%bibnotes,
+ amsmath,amssymb,
+ aps,
+%pra,
+%prb,
+%rmp,
+%prstab,
+%prstper,
+%floatfix,
+]{revtex4-1}
+
+\usepackage{graphicx}% Include figure files
+\usepackage{dcolumn}% Align table columns on decimal point
+\usepackage{bm}% bold math
+\usepackage{mathabx}
+\usepackage{textcomp}
+\usepackage{amsmath,amssymb}
+%\usepackage{hyperref}% add hypertext capabilities
+%\usepackage[mathlines]{lineno}% Enable numbering of text and display math
+%\linenumbers\relax % Commence numbering lines
+
+%\usepackage[showframe,%Uncomment any one of the following lines to test 
+%%scale=0.7, marginratio={1:1, 2:3}, ignoreall,% default settings
+%%text={7in,10in},centering,
+%%margin=1.5in,
+%%total={6.5in,8.75in}, top=1.2in, left=0.9in, includefoot,
+%%height=10in,a5paper,hmargin={3cm,0.8in},
+%]{geometry}
+
+%AIP
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{mathtools}
+\begin{document}
+\title{Modeling Momentum-Diffusion in the Solar Wind}
+\thanks{Thank you to Benjamin Chandran, Jonathan Niehof, Nathan Schwadron, Aly Aly, Matt Gorby, and Phillip Quinn}
+
+\author{Evin O'Shea}
+ \affiliation{Physics Department, University of New Hampshire}
+\date{May 2018}
+
+
+
+\begin{abstract}
+Energetic particles accelerated by large solar flares and coronal mass ejections (CMEs) are a threat to astronauts, global positioning systems (GPS), radio communications, and power grids. It is therefore vital that scientists be able to predict how such particles move and gain energy within the interplanetary medium in order to forewarn society impending hazards so that mitigating actions can be taken. In this work, I take a step towards this goal, using the Energetic Particle Radiation Environment Module (EPREM) code, which is used by UNH's radiation-dosage predictions website, I model interstellar-pickup ions (PUIs). I add to the model by including a momentum-diffusion term which contributes to the change in the distribution as it evolves in time. Here, I investigate how the given model of momentum diffusion affects the energetic PUI population ($v>u_{sw}$). This analysis focuses on the power-law spectra of the suprathermal tail of the PUI distribution. When the velocity dependence of the diffusion coefficient is normalized to the local solar-wind velocity, I have found little to no change in the spectra of the suprathermal ion tails when momentum-diffusion is included; however, when the velocity dependence of the diffusion coefficient is not normalized, hardening of the spectra of the suprathermal ion tail is observed. It is possible that the effect of momentum-diffusion and particle acceleration in CIRs is the source of the energetic seed particle population, which makes up the available particles to be accelerated by a shock. In order to understand these potentially dangerous seed particles, we hope to use new observations from Parker Solar Probe to determine the acceleration processes, such as momentum-diffusion, that yield the observed spectra.
+
+\end{abstract}
+
+
+
+\maketitle
+
+%\begin{center}
+\newpage
+
+\tableofcontents
+
+\newpage
+%\end{center}
+\section{Introduction}
+
+The Sun is the source of almost all energy harvested on Earth as it is the source of solar, wind, fossil fuel, and even food energy. The Sun's power is also dangerous; events known as solar flares and coronal mass ejections (CMEs), are when the Sun ejects large amounts of energy, magnetic field, and plasma from its surface. When particles are accelerated to high energies during these events they are called Solar Energetic Particle (SEP) events. These SEP events can harm astronauts, airplanes, and even power grids. It is estimated that an extreme event could cause trillions of dollars in damage \cite{nasacost}. In order to protect ourselves from the potential harm, we create models that allow us to predict the impact of these events before they occur. One example of this is  Predictions of radiation from REleASE, EMMREM, and Data Incorporating CRaTER, COSTEP, and other SEP measurements (PREDICCS), UNH's radiation dosage predictions website. It incorporates measurements from Cosmic Ray Telescope for the Effects of Radiation (CRaTER) and Comprehensive Suprathermal and Energetic Particle Analyzer (COSTEP) with simulations from the Energetic Particle Radiation Environment Module (EPREM) through the Earth-Moon-Mars Radiation Environment Module (EMMREM).
+
+Missions such as the upcoming Parker Solar Probe (PSP), which has a launch date of summer 2018, investigate the particles that are accelerated to high energies. The Integrated Science Investigation of the Sun (IS$\odot$IS) suite on PSP will make measurements of energetic particle fluxes. Measurements will be made of both energetic particles accelerated by solar events and the ``seed" particles that preexist solar events. These seed particles can be accelerated to high energies by the shocks associated with solar events. We are hoping to be able to make predictions that we can test by comparison with data from PSP. Along with scientific preparation, I have worked as a part of the IS$\odot$IS Science Operations Center (SOC). We have been working for years to prepare for the mission so that informative data products can be made available to scientists as soon as possible. 
+
+In order to continue developing the modeling capabilities of the EPREM code, I have added the effect of momentum diffusion to the code and studied a possible form of momentum diffusion which may improve the results of the code. I model the effects of momentum-diffusion on pickup ion distributions in the heliosphere with the hope of characterizing \textbf{suprathermal ion tails} which make up the seed populations for accelerated particles in SEP events. 
+
+
+\section{Magnetohydrodynamics (MHD)}
+
+Magnetohydrodynamics is the fluid approximation of a plasma. The assumptions are that the plasma can be treated as a fluid of particles that is conducting and approximately electromagnetically neutral (i.e. neutral on scales larger than the \textbf{Debye length}). The MHD equations explain the conservation of mass, momentum, and energy of the fluid in the electromagnetic fields. 
+
+The first equation expresses conservation of mass: the change in the mass contained within a given volume is equal to the mass flux through the surface of that volume.
+
+\begin{equation}
+\frac{\partial \rho}{\partial t} + \vec{\nabla} \cdot \left(\rho \vec{u}\right) = 0 
+\end{equation}
+where $\rho$ is the number density of particles in the fluid and $\vec{u}$ is the bulk velocity of the plasma/fluid.
+
+
+The second equation is the conservation of momentum equation for a fluid, with the force from the electromagnetic field is,
+
+\begin{equation}
+\rho \left( \frac{\partial}{\partial t} + \vec{u} \cdot \vec{\nabla}\right) \vec{u} + \nabla p = \vec{J} \times \vec{B}
+\end{equation}
+where $\vec{J}$ is the current of electric charge, given by the generalized Ohm's Law,
+
+\begin{equation}
+\vec{J} = \sigma \left(\vec{E} + \vec{u} \times \vec{B}\right)
+\end{equation}
+where $\vec{E}$ and $\vec{B}$ are the electric and magnetic fields, respectively. Lastly, the energy equation is given by the adiabatic equation of state.
+
+
+\begin{equation}
+\left(\frac{\partial }{\partial t} + \vec{u} \cdot \vec{\nabla}\right) \frac{p}{\rho^{\gamma}} = 0  
+\end{equation}
+where $\gamma = 5/3$ (in plasmas) is the ratio of specific heats for the fluid.
+
+
+These equations are the equations for a fluid, with the $\vec{J} \times \vec{B}$ force term added to the momentum conservation equation. These equations can be used to derive the frozen-in law in the ideal MHD limit.             
+
+
+\subsection{The Frozen-in Condition}
+
+The frozen-in condition is one of the first topics to be covered in a plasma class, in fact it was what my advisor covered on the first day of heliosphereic physics. The frozen-in condition is: if the conductivity of the plasma is taken to infinity (the ideal MHD limit), magnetic-field lines cannot break (i.e. there is no \textbf{magnetic reconnection}). This can be shown by starting with Ohm's Law,
+
+\begin{equation} \label{ohms}
+\vec{J} = \sigma (\vec{E} + \vec{u} \times \vec{B})
+\end{equation}
+and combing Faraday's and Ampere's laws,
+\begin{equation} \label{maxwellinduction}
+\vec{\nabla} \times \vec{E} = - \frac{\partial \vec{B}}{\partial t}
+\end{equation}
+\begin{equation}
+\vec{\nabla} \times \vec{B} = \mu_0 \vec{J}.
+\end{equation}
+
+If we insert this result into Equation (\ref{maxwellinduction}), the induction equation, we obtain the result,% (see Appendix):
+
+\begin{equation}\label{induction}
+\frac{\partial \vec{B}}{\partial t} = \vec{\nabla} \times (\vec{u} \times \vec{B})  + \eta \vec{\nabla}^2 \vec{B}
+\end{equation}
+where $\eta = \frac{1}{\mu_0 \sigma} $. If we let $\sigma \to \infty$ then, by Equation (\ref{ohms}), $\displaystyle J / \sigma \to 0 $ and we then find that:
+
+\begin{equation}
+\vec{E} = - \vec{u} \times \vec{B}
+\end{equation}
+as well as,
+\begin{equation}
+\frac{\partial \vec{B}}{\partial t} = \vec{\nabla} \times (\vec{u} \times \vec{B}).
+\end{equation}
+
+This is the frozen-in condition ($\sigma \to \infty$). Since $\eta \to 0$ there is no magnetic diffusion as \,$\eta \vec{\nabla} ^2 \vec{B}$\, is the diffusion term. This approach is a large-scale approximation. Therefore, the dynamics of magnetic reconnection (which happens when $\eta \napprox 0 $) occur on smaller time and spatial scales. In order to demonstrate the frozen-in law we must show that the flux through a surface that is moving with the plasma is constant. This follows from the above by first defining some surface $\Sigma$ which is moving with the plasma. This will cutout a 3-D volume as time is evolved. Start with the derivative of the total flux:
+
+\begin{equation}\label{firstfrozen}
+\begin{multlined}
+\frac{d \Phi}{dt} = \frac{d}{dt} \int_{\Sigma} \vec{B} \cdot \vec{dA} 
+\\ = \lim_{\Delta t \to 0} \frac{1}{\Delta t} \left( \int_{\Sigma (t + \Delta t)} \vec{B} (t + \Delta t) \cdot \vec{dA} - \int_{\Sigma (t)} \vec{B} (t) \cdot \vec{dA}  \right)
+\end{multlined}
+\end{equation}
+
+Note that:
+\begin{equation}
+\begin{multlined}
+\int_{\Sigma (t + \Delta t)} \vec{B} (t + \Delta t) \cdot \vec{dA} 
+\\ =  \int_{\Sigma(t)} \vec{B} ( t + \Delta t) \cdot \vec{dA} -
+\oint _{\partial \Sigma(t)} \vec{dl} \cdot [ \vec{u} \Delta t \times \vec{B}(t + \Delta t) ].
+\end{multlined}
+\end{equation}
+
+Therefore we can re-write Equation (\ref{firstfrozen}) (Faradays Law) as,
+
+\begin{equation}
+\begin{multlined}
+\frac{d \Phi_{\Sigma}}{d t} = \frac{d}{dt} \int_{\Sigma} \vec{B} \cdot \vec{dA} 
+\\ = \lim_{\Delta t \to 0} \frac{1}{\Delta t} \biggl( \int_{\Sigma(t)} \vec{B} ( t + \Delta t) \cdot \vec{dA}
+\\ - \oint _{\partial \Sigma(t)} \vec{dl} \cdot [ \vec{u} \Delta t \times \vec{B}(t + \Delta t) ] - \int_{\Sigma (t)} \vec{B} (t) \cdot \vec{dA}  \biggr)
+\\ = \lim_{\Delta t \to 0} \frac{1}{\Delta t} \left( \int_{\Sigma(t)} [\vec{B} (t + \Delta t) - \vec{B} (t)  \cdot \vec{dA} \right) 
+\\- \oint _{\partial \Sigma(t)} \vec{dl} \cdot (\vec{u} \times \vec{B})
+\\= \int_{\Sigma (t)} \frac{\partial \vec{B}}{\partial t} \cdot \vec{dA} - \oint _{\partial \Sigma)} \vec{dl} \cdot (\vec{u} \times \vec{B}).
+\end{multlined}
+\end{equation}
+
+We can then use Equation (\ref{maxwellinduction}) to obtain
+
+\begin{equation}
+\begin{multlined}
+\int_{\Sigma (t)} \frac{\partial \vec{B}}{\partial t} \cdot \vec{dA}
+\\ = \int_{\Sigma (t)} - \vec{\nabla} \times \vec{E} \cdot \vec{dA}
+\\ = - \oint _{\partial \Sigma)} \vec{dl} \cdot \vec{E}.
+\end{multlined}
+\end{equation}
+
+We can then obtain our result since $\vec{E} + (\vec{u} \times \vec{B}) = 0$,
+
+\begin{equation}
+\frac{d \Phi_{\Sigma}}{d t} = - \oint _{\partial \Sigma(t))} \vec{dl} \cdot (\vec{E} + \vec{u} \times \vec{B} \, ) = 0.
+\end{equation}
+
+This demonstrates that given the frozen-in condition (the ideal MHD case), the magnetic flux through a surface of swept out by moving the plasma is constant. This also goes by the name of Alfvén's Theorem.
+
+
+\section{The Solar Dynamo}
+
+
+The Sun is driven by the ``Solar Dynamo" which is a combination of competing processes of gravity, electromagnetism, and nuclear fusion. Gravity is responsible for bringing together the gas, mainly hydrogen and helium, and compressing it into the large, nearly spherical mass that we know. When a protostar is contracting to form a star, the system looses gravitational potential energy through electromagnetic radiation. The gravitational effects are also what bring the core of the Sun to high enough temperatures that fusion can occur. Fusion is an immense source of energy and is what produces the energy that is radiated from the Sun. Gravity is also responsible for the rotation of the Sun. As the gas came together, its angular momentum was conserved, but its moment of inertial was not. Gravity pulled the gas together and as it did so, the gas rotated faster as its moment of inertial becomes smaller. It is truly gravity that causes stars and black holes to form and drives their evolution. The nuclear reactions at the center of the Sun cause the center to be much hotter than the exterior of the Sun. This causes a temperature gradient. Since the temperature gradient is steeper than that of an adiabatic process, convection bubbles occur inside the Sun. This is known as the \textbf{convective instability}. Convection circulates plasma in the outer-third of the Sun's interior, known as the convective zone. This process of cycling plasma is what creates the Sun's magnetic field. 
+
+
+Observationally, we see the Sun has a magnetic-field structure that oscillates between predominantly dipolar and a more complicated, weaker, magnetic-field structure. The solar dynamo model is largely driven by the Suns rotation. The rotation of the plasma will not be equal everywhere on the sphere; the poles of the sun rotate slower than the equator. This is called differential rotation. Differential rotation, refers to the fact that there is a net motion of plasma in both the rotating frames at the pole and the equator. This is important because plasma pulls magnetic field along with it.
+
+%because the rotation has come from a conservation of angular momentum, the poles will rotate faster than the equator as the moment of inertia of a particle at the equator is larger than that of a particle at the poles.
+
+Magnetic field is pulled along with the plasma, and we know two processes that are moving around plasma in the Sun, differential rotation and convection, so, given an initially dipolar field on the surface of the Sun (which corresponds to solar minimum), the differential rotation will pull the field at the equator along with its net motion with respect to the poles. This will cause the configuration to change as shown below:
+
+%\figure{dynamo}
+\begin{center}
+\begin{figure}[h]
+\includegraphics[scale=.1]{dynamo.jpg}
+\caption{The effect on the magnetic fields from the differential rotation of the Sun through time. This figure was taken from \cite{dynamo}.}
+\end{figure}
+\end{center}
+
+To demonstrate this evolution we look to Equation (\ref{induction}). We can observe that for a rotating mass, when we separate the magnetic field in to toroidal ($\vec{B} _T$) and poloidal ($\vec{B} _P$) components where $\vec{B} =  \vec{B} _P + \vec{B} _T $. If one is very careful about applying the derivative operators in toroidal and poloidal coordinates, the time evolution of each component can be written in the explicit forms,
+
+\begin{equation} \label{dynamoP}
+\frac{\partial \vec{B} _P}{\partial t} = (\vec{B} _P \cdot \vec{\nabla}) \, \vec{u} _P - (\vec{u} _P \cdot \vec{\nabla}) \vec{B} _P + \eta \vec{\nabla} ^2 \vec{B} _P ,
+\end{equation} 
+
+\begin{equation} \label{dynamoT}
+\frac{\partial \vec{B} _{T}}{\partial t} = r (\vec{B} _P \cdot \vec{\nabla})\frac{\vec{u _T}}{r} - r ( \vec{u} _P \cdot \vec{\nabla}) \frac{\vec{B} _T}{r} + \eta (\vec{\nabla} ^2 - \frac{1}{r^2} ) \vec{B} _T,
+\end{equation}
+where $\vec{u}$ is the plasma velocity of the Sun (characterized by the differential rotation). The second term on the right hand side of Equation (\ref{dynamoP}) is an advection term, this is the term that corresponds to the poloidal field weakening due to the differential rotation. This terms appears as the second term on the right hand side of Equation (\ref{dynamoT}), but, here, will be a source term. The diffusion terms (with coefficient $\eta$) are not important as during solar minimum (the beginning of the cycle) magnetic reconnection events are much less common.  
+
+The process described so far would cause the magnetic field to become completely toroidal (azimuthal). If there were only this differential rotation affect, we would see the Sun have a trend towards totally toroidal field and it would not return to a predominantly poloidal field; however, this is not what happens in the Sun.
+
+In order to return to a solar minimum state of the Sun, there must be a mechanism which produces poloidal field. The poloidal field is produced by the combined affects of convection and differential rotation. Given an initially toroidal magnetic field, a convective bubble will pull along the field as it rises. As the bubble rises, the rotation (cause by a Coriolis effect) will cause the bubble to twist as it rises. This will thereby twist the magnetic-field line. This process is shown in Figure (\ref{fulldynamo}). The twisted field lines will eventually reconnect after enough twisting has occurred. After the poloidal loops have reconnected, they will move to the poles where they will strengthen the polarity of that pole. This is known as the Babcock-Leighton Mechanism. This can be introduced to our solar dynamo by adding a term to the right hand side of Equation (\ref{dynamoP}) such as $\alpha \vec{B} _T$. This type of term is one that increases the strength of the poloidal field more as the strength of the toroidal field increases. This choice of the so-called ``alpha effect" term has been posited empirically and there are many variations of these effects that restore poloidal magnetic field to the Sun. 
+
+% cite : (Dikpati & Charbonneau 1999)
+
+
+\begin{center}
+\begin{figure}[h] 
+\includegraphics[scale=.6]{fulldynamo.jpg}
+\caption{The diagram shows the Suns full solar cycle as the field starts predominantly poloidal, becomes more toroidal and then becomes dominantly poloidal again, with the opposite polarity as when the solar cycle started. This figure was taken from \cite{fulldynamo}. \label{fulldynamo}}
+% ref: https://www2.hao.ucar.edu/hao-science/Sun-dynamo-0
+\end{figure}
+\end{center}
+
+This cycle, known as the solar cycle is 11 years from poloidal field back to poloidal field. The way in which the convective bubbles are twisted is such that the field will actually flip polarity during this 11 year process. Therefore, the solar magnetic cycle takes 22 years and returns the Sun's dominant magnetic field back to the same polarity dipolar field. It can be hard to see, but because of the differential rotation and Coriolis force, the polarity must switch every cycle. There is no possibility of a solar cycle that does not flip polarity.
+
+Solar activity occurs when there is magnetic reconnection. These events occur more often at solar maximum, when the field is in the more complicated, weaker configuration, halfway through the cycle. When convective bubbles rise up they can escape from the Sun all together and a CME can occur. CMEs are driven by magnetic reconnection that occurs at and under the surface of the Sun. The reconnection allows these large bubbles of plasma and closed field lines to be released from the Sun at very high velocities. CMEs usually are preceded by solar flares which are smaller reconnection events. Flares usually precede CMEs in a chain reaction from small reconnection events to the large events associated with the CME.
+
+
+%An interesting note is that during this process where the field switches polarity, the field will have a predominantly quadrapolar or octopolar field 
+
+
+\section{The Solar Wind}
+
+The solar wind is the continual flow of plasma from the Sun out through the heliosphere. Eugene Parker, after whom Solar Probe was named, demonstrated that there are solutions for a supersonic solar wind \cite{parker65}. This derivation is similar to the derivation for Bondi accretion. We start with the assumption of a spherically symmetric, adiabatic outflow. We use the fluid equations, which are the MHD equations without the $\vec{J} \times \vec{B}$ electromagnetic force.
+
+Conservation of mass is known by the name of the continuity equation:
+
+\begin{equation}
+\frac{\partial \rho}{\partial t} + \vec{\nabla} \cdot (\rho \vec{u}) = 0 
+\end{equation}
+
+The momentum conservation, or force balance equation:
+
+\begin{equation}
+\rho \left( \frac{\partial}{\partial t} + \vec{u} \cdot \vec{\nabla} \right) \vec{u} + \nabla p = 0
+\end{equation}
+
+The adiabatic equation of state:
+
+\begin{equation}
+\left(\frac{\partial }{\partial t} + \vec{u} \cdot \vec{\nabla} \right) \frac{p}{\rho^{\gamma}} = 0  
+\end{equation}
+
+To begin, we make the approximation of a spherical flow that is in steady state. The this means $\displaystyle \frac{\partial}{\partial t} = \frac{\partial}{\partial \theta} = \frac{\partial}{\partial \phi} = 0$. %As a note, the assumption that there is no flow, ($u = 0$) would be a system in hydrostatic equilibrium. This would yield solutions dependent on the graviational pressure. These values for the pressure at 1 AU would be much greater than what have been observed (Noe Lugaz, personal communication). 
+Using our assumptions the three equations can be re-written as:
+
+The continuity equation:
+
+\begin{equation}
+\frac{1}{r^2} \frac{d}{dr}(r^2 \rho u) = 0
+\end{equation}
+
+The force equation:
+
+\begin{equation}
+\rho u \frac{du}{dr} = -\frac{dp}{dr} - \rho \frac{GM}{r^2}
+\end{equation}
+
+The energy equation:  
+
+\begin{equation}
+u \frac{dp}{dr} + \gamma p \frac{1}{r^2}\frac{d}{dr} ( r^2 u) = 0
+\end{equation}
+
+If we then apply the radial derivatives to expand our terms and then insert the continuity equation and the energy equation into the force equation we can reach the result:
+
+\begin{equation}
+u \frac{du}{dr} = \frac{\gamma p}{\rho} \frac{2}{r} + \frac{\gamma p}{\rho}\frac{1}{u} \frac{du}{dr} - \frac{GM}{r^2}
+\end{equation}
+
+This result will become useful once we identify that: $\displaystyle \frac{\gamma p}{\rho} = c^2 _s$ where $c_s$ is the sound speed. After this we obtain:
+
+\begin{equation}
+\frac{u^2 - c^2 _s}{u} \frac{du}{dr} = \frac{2 c^2 _s}{r} - \frac{GM}{r^2}
+\end{equation}
+
+After integration, there are four families of solutions for the solar-wind velocity as a function of the radius. The solutions are shown in Figure (\ref{swsols}). There is a solution for a solar wind that starts subsonic  ($u<c_s$) at the Sun and becomes supersonic ($u>c_s$) at some radius $r_s$.
+
+\begin{center}
+\begin{figure}[h] 
+\includegraphics[scale=.4]{swsols.png}
+\caption{The figure shows 4 of the 6 possible solution types. The other two are not explicit functions of $r$ and are therefore ignored. The Parker solar wind solution is the transonic wind solution. This figure was taken from \cite{swsolsfig}. \label{swsols}}
+\end{figure}
+\end{center}
+
+It should also be noted that Parker assumed a radial dependence of temperature that makes the derivation more complete, but still obtains a transonic solution.
+
+\section{The Parker Spiral}
+The radial outflow solution to the Sun is approximately correct and is assumed locally at the Sun's surface. The flow propagates radially with velocity $\vec{u} = u_{sw} \hat e _r$. The outflow is radial in the Sun's frame, but the Sun is rotating with a frequency $\Omega_{\odot}$. In the stationary frame, the azimuthal component of the flow and magnetic-field are given by:
+
+\begin{equation}
+u_{\phi} = - u_r ( \frac{\Omega_{\odot} r}{v_{sw}} )
+\end{equation}
+
+\begin{equation}
+B_{\phi} = -B_r (\frac{\Omega_{\odot} r}{v_{sw}})
+\end{equation}
+
+
+% This means that the flow in the stationary frame is given by:
+
+% \begin{equation}
+% \vec{u} = u_r ( \hat e_r -  \frac{\Omega_{\odot} r}{v_{sw}} \hat e_{\phi})
+% \end{equation}
+
+
+The angle of the interplanetary magnetic-field line at a given distance from the Sun can be found assuming a constant solar-wind velocity and a measurement of the angle and radial distance at another point in the heliosphere. This relation is in the equation:
+
+\begin{equation}
+r - r_0 = - \frac{u_{sw}}{\Omega_{\odot} } (\phi - \phi_0)
+\end{equation}
+
+In this solution, the bulk flow and field lines become more azimuthal further from the Sun by the ratio of the rotation frequency of the Sun to the solar-wind velocity. A plot of the Parker Spiral is shown in Figure (\ref{cirbfield}). 
+
+
+\section{Interstellar Pickup Ions}
+Neutral atoms from the interstellar medium often make their way close to the Sun as the heliosphere moves toward these stationary particles at approximately 20-30 km/s. These atoms are not likely to interact with the solar wind when they are neutral particles; however, when the neutrals get closer to the Sun, they will be more likely to be ionized by radiation. Once the neutral becomes ionized, it will interact with the solar wind. One aspect of the frozen-in condition is that:
+
+\begin{equation} 
+\vec{E} = - \vec{u} \times \vec{B}
+\end{equation}
+
+Where $u$ is the plasma velocity. Therefore, once the interstellar neutral atom is ionized, the electric field in its stationary reference frame is large, as $u$ would be the solar-wind velocity (\raise.17ex\hbox{$\scriptstyle\sim$}400 km/s). The ion will then be quickly accelerated by this electric field. Once it is accelerated to the solar-wind velocity, the particle will no longer be in a reference frame with an electric field, it will now be in the solar wind frame. This process will reduce the momentum of the background solar wind. These particles are known as interstellar-pickup ions because they start as interstellar neutrals, become ionized in the solar wind, and then are picked up by the solar wind and accelerated to the solar-wind velocity.
+
+\section{Transport of Energetic Particles}
+
+The transport of energetic particles such as cosmic rays and interstellar pickup ions is heavily tied to the solar wind. We model the propagation of these effects with the Parker Transport equation \cite{parker65}, or the focused transport equation \cite{foc1} \cite{foc2}. This is a kinetic approach to the plasma rather than an MHD approach (since we are describing the evolution of the distribution function). 
+
+We can investigate the distribution function of the particles to understand the kinetic theory. The distribution function is the \textbf{phase-space} density of particles and the first and second moments of the distribution are the number density of particles,
+
+\begin{equation}
+n = \int f \, d^3x\, d^3v
+\end{equation}
+and the average velocity of the particles,
+
+\begin{equation}
+u = \frac{1}{n} \int  f(\vec{x}, \vec{v}) \, v  \, d^3x \, d^3v.
+\end{equation}
+
+Pitch angle is an important concept in plasma physics, especially in kinetic theory. This is a way of specifying the direction of the velocity of a particle in the distribution with respect to the background magnetic-field (see Figure (\ref{pitch})). In calculations, $\mu = \cos (\alpha)$ will be used instead of $\alpha$. It is important to recognize that $\mu$ is a phase-space coordinate since it specifies the direction of the velocity.
+
+\begin{center}
+\begin{figure}[h] 
+\includegraphics[scale=.3]{pitchangle.png}
+\caption{The pitch angle is shown as the angle $\theta$ after we project from the 3-D geometry on the left to the 2-D geometry on the right. The pitch angle is often denoted by $\alpha$. Image from \cite{pitchangle}. \label{pitch}}
+\end{figure}
+\end{center}
+%ref: http://inspirehep.net/record/1385728/plots
+
+The transport equation can be derived by starting with the Vlasov equation for the distribution function
+
+\begin{equation}\label{vlasov}
+\frac{\partial f}{\partial t}  + \vec{v} \cdot \vec{\nabla} f + \frac{q}{m} \left( \vec{E} + \frac{1}{c} \vec{v} \times \vec{B} \right) \cdot \vec{\nabla}_v f = 0
+\end{equation}
+
+We solve these equations with quasi-linear theory where we let $\vec{B} \approx \vec{B}_0 + \delta \vec{B}$ and $f \approx f_0 + \delta f$. Quasi-linear theory assumes that the distribution function and the magnetic field can be broken up into the ensemble average of the distribution ($f_0$) and the fluctuating distribution ($\delta f$) as well as the background magnetic field ($\vec{B}_0$) and the fluctuating magnetic field ($\delta \vec{B}$). By linearizing both the magnetic field and the distribution function, we can attempt to understand the various processes affecting the distribution.
+
+Quasi-linear theory is applied by taking the ensemble average of Equation (\ref{vlasov}), where $\left \langle \delta \vec{B} \right \rangle = 0$ and $\left \langle\delta f \right \rangle = 0 $ where $\left \langle ... \right \rangle$ is notation for the ensemble average. The result is
+\begin{equation}
+\frac{\partial f_0}{\partial t} + \vec{v} \cdot \vec{\nabla} f_0 - \left( \frac{q \vec{v}}{m c} \times \vec{B} _0 \right) \cdot \vec{\nabla} _v f_0 - \left \langle \frac{q \vec{v}}{m c} \times \delta \vec{B} \cdot \vec{\nabla}_v \, \delta f \right \rangle = 0.
+\end{equation}
+We can then note that
+\begin{equation}
+\left( \frac{q \vec{v}}{m c} \times \vec{B} _0 \right) \cdot \vec{\nabla} _v f_0 = \Omega_0 \frac{\partial f_0}{\partial \phi _v}
+\end{equation}
+where $\Omega_0$ is the gyro-frequency of a particle as is relates to the bulk magnetic field and $\phi _v$ is the $\phi$ direction of the velocity where the z-axis has been chosen to be along $\vec{B} _0$. We then obtain the form:
+
+\begin{equation}
+\frac{\partial f_0}{\partial t} + \vec{v} \cdot \vec{\nabla} f_0 - \Omega_0 \frac{\partial f_0}{\partial \phi _v} = \vec{\nabla}_v \cdot \left \langle \frac{q \vec{v}}{m c} \times \delta \vec{B} \, \delta f \right \rangle
+\end{equation}
+
+This is not the final form of the transport equation, as the analysis of the remaining ensemble average term will illuminate the remaining terms in the transport equation. See \cite{jokipiiandparker} for the complete derivation of the general transport equation given by:
+
+\begin{equation} \label{transport}
+\frac{\partial f}{\partial t} = \vec{\nabla} \cdot (\kappa \cdot \vec{\nabla} f - \vec{u} f) + \frac{1}{3 p^2} \left( \vec{\nabla} \cdot \vec{u} \frac{\partial p^3 f}{\partial p} \right)
+\end{equation}
+where $\kappa$ is the spatial diffusion tensor, $p$ is the particle momentum, and $\vec{u}$ is the background solar-wind velocity.
+
+The transport of energetic particles has important effects on solar events such as Flares and CME's. An open question \cite{ISOISpaper} is still What is the source of the energetic seed populations that are accelerated by shocks caused by solar events. It is believed that these suprathermal ions are accelerated by shocks in solar energetic particle (SEP) events. With the EMMREM code, we look to obtain reasonable predictions for the \textbf{quiet-time} suprathermal ion populations.
+
+
+
+\section{Diffusive Shock Acceleration}
+Diffusive shock acceleration is a process that drives the system toward a distribution function that has a power-law scaling of the energetic particles is
+
+\begin{equation}\label{powerlaw}
+\frac{d n(\epsilon)}{d \epsilon} \, \propto \,\, \, \epsilon^{-\gamma},
+\end{equation}
+where $n$ is the spatial density of particles and $\epsilon$ could be velocity, momentum, or energy which may have different values for $\gamma$, where $\gamma$ is the spectral index. 
+
+In 1-D, normal to the shock, and steady-state, Equation (\ref{transport}) becomes:
+
+%How to get here from parker transport equation? **** SEE prof chandran notes 
+\begin{equation}\label{shockeqn}
+\frac{\partial f}{\partial t} + u \frac{\partial f}{\partial x} - \frac{\partial}{\partial x} \left( K \frac{\partial f}{\partial x} \right) + \frac{\Delta u}{3} \delta (x) \frac{\partial f}{\partial p} = Q
+\end{equation}
+where we have let the shock be at $x = 0$ and $\Delta u$ is the difference between the upstream and downstream velocities. Therefore, upstream and downstream, when $x \neq 0$ we obtain the ordinary differential equation:
+
+\begin{equation}
+\frac{\partial}{\partial x} \left( u f - K \frac{\partial f}{\partial x} \right) = 0
+\end{equation}
+
+We see two types of solutions, exponential solutions with real arguments, and constant solutions.
+
+Since an exponential solution on both sides is not physical, and a constant solution on both sides would not be possible as $\displaystyle \frac{\partial f}{\partial x}$ should change at $x = 0$ because of the term $\displaystyle \frac{\Delta \dot u}{3} \delta (x)$ in Equation (\ref{shockeqn}). An constant solution upstream would also be unphysical because we assume there are no energetic particles there before the shock arrives. Therefore the physical solution is the solution with an exponential upstream and a constant downstream.
+
+We then integrate our solutions near the shock to obtain,
+
+\begin{equation}
+u_u f_{sh} + \frac{\Delta u}{3} p \frac{\partial f_{sh}}{\partial p} = Q \delta (p-p_{inj})
+\end{equation}
+where the subscripts $u$ and $sh$ stand for upstream (of the shock) and at the shock respectively and $p_{inj}$ is the momentum of the injected particles. We can introduce a factor of $p^{\gamma}$ on both sides and rearrange and then integrate over momentum from $p_{inj}$ to an arbitrary $p$. We obtain the famous result of diffusive shock acceleration \cite{diffshock}:
+
+\begin{equation}
+f_{sh} (p) = \frac{3}{\Delta u} (\frac{p_{inj}}{p})^{\gamma}
+\end{equation}
+where $\displaystyle \gamma = \frac{3 \, u_u}{u_u - u_d}$. This is known as a ``power-law" tail because it is described by Equation (\ref{powerlaw}) where the spectral index is $-\gamma$. This result is used to explain the power-law nature of cosmic rays as well as other shock-accelerated particles. 
+
+An important result that follows from this is that for stronger shocks, $\gamma$ is smaller. This means that the energy obtained by the accelerated particles is greater. It can also be shown that the needed injection energy is higher for larger shocks \cite{injection}. This demonstration is outside of the scope of this paper, but I will mention that this is a part of the motivation for research into the suprathermal ions in the solar wind. The highest energy particles can be the most accelerated particles when there are shocks, such as ones associated with CMEs.
+
+
+\section{Corotating Interaction Regions (CIRs) and Pickup Ions}
+Corotating interaction regions are compressive structures observed in the Parker Spiral solar wind. They occur when there is a fast solar wind next to a slower wind such that as the solar wind propagates out through heliosphere the faster wind will be between the slow wind and the Sun. When this happens, the the faster wind will propagate faster radially than the slow wind. This will cause a compression region between the two flows. This compression can become strong enough to form a shock between 1 and 5 AU \cite{cirshocks}. These regions are also important regions where particle acceleration occurs \cite{ciraccel} \cite{Giacalone2002}. The EPREM code uses the model of \textit{Giacalone et al.} \cite{Giacalone2002} to model the CIR where a shock has not formed. The velocity of the wind is a function of radius $r$ and azimuthal angle $\phi$:
+
+\begin{equation*}
+\begin{multlined}
+U(r, \phi) = U_{\odot} + \frac{1}{2} (U_f - U_s) \tanh \left( \frac{\phi_c - \Omega_{\odot} r / W - \phi}{\Delta \phi_c} \right) \\- \frac{1}{2} (U_f - U_s) \tanh \left( \frac{\phi_{rf} - \Omega_{\odot} r / W - \phi}{\Delta \phi_{rf}} \right)
+\end{multlined}
+\end{equation*}
+where $U_f$ and $U_s$ are the velocities of the fast and slow wind respectively and $\phi_{rf}$, $\Delta \phi_{rf}$, $\phi_c$, and $\Delta \phi_c$ are the locations and widths of the rarefaction (rf) and compression (c) regions. The magnetic-field in this model is then given by:
+
+\begin{equation}
+B_r(r, \phi) = \frac{\Psi_i}{U(r, \phi) - W} \left( \frac{r_{\odot}}{r} \right)^2 \, U(r, \phi)
+\end{equation}
+
+\begin{equation}
+B_{\phi} (r, \phi) = - \frac{\Psi_i}{U(r, \phi) - W} \left( \frac{r_{\odot}}{r} \right)^2 \Omega_{\odot} r \sin \theta
+\end{equation}
+where $\Psi_i$ is a normalization factor given by the boundary conditions at the sun:
+
+\begin{equation}
+\Psi_i \approx \, (U(r_{\odot}, \phi_i) - W) \frac{B_r (r_{\odot}, \phi_i)}{U(r_{\odot}, \phi_i)}
+\end{equation} 
+
+This model has been previously implemented into the EPREM code and is the primary mechanism of particle acceleration. In the following sections, the effect of the CIR on the distribution of PUIs will be shown.
+
+
+
+\section{The EMMREM Code}
+%The Energetic Particle Radiation Environment Module, a parallelized particle numerical kinetic code, using the focused transport equation, including adiabatic cooling/heating, adiabatic focusing, and parallel and perpendicular diffusion.
+
+%In order to compute the PUI velocity distributions in structured solar wind, we use the Energetic Particle Radiation Environment Module (EPREM) [Schwadron et al., 2010], a highly versatile and flexible parallelized numerical kinetic particle code that accounts for the time-dependent transport of PUIs, suprathermal, and energetic particles along and across magnetic-field lines for any field and flow topology in three dimensions
+
+
+%In the modeling presented here, we neglect stochastic acceleration and perpendicular diffusion. The advantage of the formulation in equation (12) is that most of the transport coefficients are obtained simply by differencing the bulk plasma quantities (e.g., density, field strength, and plasma velocity) at each “node” moving with the solar wind flow from the values at the previous time step to the updated values.
+
+The EMMREM code \cite{EPREM} is a kinetic simulation (a simulation of the distribution function of particles). It evolves the distribution function in time according to the focused transport equation \cite{chen}
+
+
+\begin{equation}
+  \begin{multlined}
+    \\ \left( 1 - \frac{\vec{u} \cdot \vec{e}_b v_{\mu} }{c^2} \right) \frac{df}{dt}
+    \\+ \, v_{\mu} \vec{e} _b \cdot \vec{\nabla} f
+    \\+  \frac{(1-\mu^2)}{2} \left[ -v \vec{e} _b \cdot \vec{\nabla} \ln(B) - \frac{2}{v} \vec{e} _b \cdot \frac{d \vec{u}}{dt} + \mu \frac{d \ln ( n^2 / B^3)}{dt} \right] \frac{\partial f}{\partial \mu}
+    \\+ \left[- \frac{\mu \vec{e} _b}{v} \cdot \frac{d \vec{u}}{dt} + \mu^2 \frac{d\, \ln (n/B)}{dt} + \frac{1-\mu^2}{2} \frac{d\, \ln (B)}{dt}\right] \frac{\partial f}{\partial \ln p}
+    \\- \vec{v} \cdot \vec{\nabla} f + q(\vec{E} - \vec{u} \times \vec{B}) 
+    \\= \frac{\partial}{\partial \mu} \left( \frac{(1-\mu^2) v}{4 \lambda_p} \frac{\partial f}{\partial \mu} \right)
+    \\- \frac{1}{v^2} \frac{\partial}{\partial v} \left( v^2 D \frac{\partial f}{\partial v} \right)
+    \\ +Q.
+    \\
+\end{multlined}
+\end{equation}
+
+
+This equation describes the the distribution function ($f$) of the particles and is used to numerically integrate and thereby evolve the distribution function in time. Here $\vec{u}$ is the background solar-wind velocity and $\displaystyle \frac{d}{dt} = \frac{\partial}{\partial t} + \vec{u} \cdot \vec{\nabla}$. The unit vector in the direction of the magnetic field is $\vec{e}_b$. The first term is the convective derivative of the distribution function. The second term is the streaming effect. The third and fourth terms are the adiabatic and adiabatic heating/cooling respectively. The first term on the right hand side of the equation is the pitch angle scattering term. The second term on the right hand side is the stochastic acceleration (momentum-diffusion) term. The final term, Q, is the source term.
+
+The code incorporates all of these effects except for momentum diffusion. We also neglect cross-field diffusion. The code evolves the distribution function forward in time with a constant time step and evolves in the fluid frame. This means the spatial grid is generated as the streams propagate outward. I have added a term for momentum diffusion with the diffusion coefficient \cite{Jokipii and Lee 2010}:
+
+\begin{equation}
+D = D_0 \, v^{\alpha-2}
+\end{equation}
+where $v$ the velocity (which can be normalized to $u_{sw}$), $D_0$ is a numerical coefficient, and $\alpha$ is a parameter. The form of momentum diffusion is \cite{Jokipii and Lee 2010}
+
+\begin{equation}
+    \frac{\partial f}{\partial t} = 
+    \frac{1}{v^2} \frac{\partial}{\partial v} \left( v^2 D \frac{\partial f}{\partial v} \right)
+\end{equation}
+
+In order to do numerical calculations with this equation, we want to find the flux of particles from one point to another in the simulated distribution function. Integrating over pitch angle will obtain only a dependence on the magnitude of the velocity gives a flux of particles over some time $dt$ through a energy bin boundary to be
+
+\begin{equation}
+    F \biggr\rvert _{v_i}  =  - D \ \frac{\partial f}{\partial v} \biggr\rvert _{v_i}.
+\end{equation}
+
+Where $F$ is the flux of particles into the energy bin $v_i$ from the energy bin at $v_{i+1}$. Note that $\displaystyle \frac{\partial f}{\partial v} \biggr\rvert_{v_i}$ is the derivative between points $v_i$ and $v_{i+1}$ (see Equation (\ref{euler}). This allows us to calculate the change in particles at a given energy/velocity bin by calculating the flux across the boundaries. This is a conservative form as the simulation can conserve particles since the number of particles leaving one bin is equal to the number entering the bin next to it. This means that a zero flux boundary condition must be imposed in order to conserve particles completely and because the derivative $\displaystyle \frac{\partial f}{\partial v}\biggr\rvert_{v_i}$ cannot be evaluated on the outside of the grid endpoints. This means the change in number of particles from a non-boundary energy bin is
+
+%This means that a zero flux boundary condition must be imposed, since the fluxes cannot be calculated on the outside of the lowest and highest energy bins and in order to conserve particles completely, and because the derivative $\frac{\partial f}{\partial v}\biggr\rvert_{v_i}$ cannot be evaluated at the grid endpoints.
+
+\begin{equation}
+    \Delta f \biggr\rvert_{v_i}  =   D \left( \frac{\partial f}{\partial v} \biggr\rvert_{v_i-1} - \frac{\partial f}{\partial v} \biggr\rvert_{v_{i}}  \right)
+\end{equation}
+
+It is important to note we are doing an Euler-forward derivative calculation, which is simple, but will work best since we have a non-uniform grid and want to calculate the derivative between points rather than at them. The derivative between points $v_i$ and $v_{i+1}$ is therefore
+
+\begin{equation}
+	\label{euler}
+    \frac{\partial f}{\partial v}\biggr\rvert_{v_i} = \frac{f\big\rvert_{v_{i+1}} - f \big\rvert_{v_{i}} }{ v_{i+1} - v_i } 
+\end{equation}
+
+For the bins on the low and high ends of the distribution, the fluxes of particles are taken to be, respectively
+
+\begin{equation}
+    \Delta f \biggr\rvert_{v_0}  =   - D  \frac{\partial f}{\partial v}\biggr\rvert_{v_{0}}
+\end{equation}
+
+\begin{equation}
+    \Delta f \biggr\rvert_{v_n}  =   D  \frac{\partial f}{\partial v}\biggr\rvert_{v_{n-1}} .
+\end{equation}
+
+
+\section{Modeling Momentum Diffusion}
+
+There has been recent research \cite{chen} investigating the PUI distribution in the heliosphere. The simulation uses a hot-gas model for the interstellar medium to calculate the spatial distribution of neutral gas and then uses the photo-ionization rate to calculate the injection rate of PUIs. The code uses kinetic theory to evolve the simulation in time. The work previously done ignores particle drift perpendicular to field lines as well as momentum diffusion. In preparation for the launch of PSP, we are looking to revisit this study (Aly Aly, article in preparation). The goal of this paper will be to update the parameters of the simulation, e.g. the temperature of the interstellar gas has been shown to be \raise.17ex\hbox{$\scriptstyle\sim$}30\% higher \cite{ismtemp} than the previous result of 6300 K \cite{ismold} used by \textit{Chen et al} \cite{chen}. We also hope to extend our model to include momentum diffusion. I have found that momentum diffusion can have a significant effect on the spectra of the thermal tail of the PUIs that is caused by the acceleration from the CIR if the velocity dependence of the diffusion coefficient is not normalized. It may also be an important acceleration mechanism when there is no CIR. When the velocity dependence of the diffusion coefficient is normalized, there is not a significant effect on the results of the simulations.
+
+\subsection{Previous Work}
+Much of the work to be presented in this section has been done along with Aly Aly (University of New Hampshire) and is a continuation of the work done by \textit{Chen et al} \cite{chen}. 
+
+\subsubsection{Quiet-Time Solar Wind}
+The results obtained in the quiet-time solar wind have been compared with analytical models and have been shown to coincide \cite{chen}. The simulated distribution of PUIs in an undisturbed solar wind without a compression region is shown in Figure (\ref{qtnocir}). 
+
+\begin{figure}[h]
+\includegraphics[scale=.4]{no_cir_chen38.png}
+\caption{This image shows the log-log plot of the PUI distribution (number of particles) at 1 AU versus the magnitude of the particle velocity (normalized to the solar-wind velocity). This simulation was run without a CIR or momentum-diffusion. \label{qtnocir}}
+\end{figure}
+
+This distribution can be explained by two properties of the PUIs. First, as discussed previously, the electric field that accelerates the PUIs accelerates them to nearly the solar-wind velocity. The injected PUIs therefore are at the solar-wind velocity. The lower energy (velocity) particles are the particles that were injected at the solar-wind velocity but have been adiabatically cooled. As seen in Figure (\ref{qtnocir}), there are no particles with velocity above the solar-wind velocity as the acceleration processes have not yet been included.
+
+\subsubsection{Solar Wind with a CIR}
+The next step to understanding the suprathermal PUI distribution is to investigate the distribution when the simulation includes a CIR. The difference here is that the background solar-wind velocity varies rather than being the same everywhere. The compression region is shown in Figure (\ref{cirbfield}). The CIR has a larger magnetic-field strength as the field lines are more dense. 
+
+\begin{figure}[h]
+\includegraphics[scale=.4]{cir_b_field.png}
+\caption{The plot shows the ecliptic slice of the magnetic-field lines within the simulated heliosphere. The compression region is the dense region of field lines 53-59. \label{cirbfield}}
+\end{figure}
+
+The compression region accelerates the particles as described previously. The distribution inside the CIR is shown in Figure (\ref{cirpuidist}). 
+
+\begin{figure}[h]
+\includegraphics[scale=0.4]{cir_1au_59.png}
+\caption{The plotted PUI distribution inside the compression region at 1 AU. The slope of the tail is softer than $v^{-5}$, but does demonstrate acceleration of the PUIs when compared to Figure (\ref{qtnocir}). \label{cirpuidist}}
+\end{figure}
+
+
+
+The PUI distribution now includes suprathermal ($v > v_{sw}$) ions. The spectra of the tail of this distribution is \raise.17ex\hbox{$\scriptstyle\sim$}\,$v^{-7}$. This spectra is softer than is typically observed ($v^{-5}$) \cite{vminus5}. This means there may be another acceleration mechanism that causes the spectra to harden to $v^{-5}$.
+
+
+\subsection{New Results with Momentum Diffusion}
+
+I have added the momentum-diffusion effect to the EPREM code as described previously. The results can be demonstrated with direct comparison to the results of simulations before the addition of momentum diffusion. 
+
+Since there are two unknown parameters that do not have a known coefficient (though work has looked into this, e.g. \cite{nathan96}). I first looked at the conservative value of $\alpha = 2.5$ which means the diffusion coefficient $D \, \propto \,\sqrt{v}$.
+
+First, I investigated the diffusion coefficient where the velocity dependence of the diffusion coefficient was not normalized. This means that the dimensions of the diffusion coefficient depend on the power of the velocity used. The momentum diffusion is demonstrated by the direct comparison of Figure (\ref{cirnomom}) and Figure (\ref{e182p5cir}). The diffusion effect can be most significantly noticed just above the solar-wind velocity, because this is where the derivative of the distribution is large and changes rapidly. Here, $\alpha = 2.5$ and the diffusion coefficient is \raise.17ex\hbox{$\scriptstyle\sim$}\,1.7$\times 10^{-14}$ (m/s)$^{\frac{1}{2}}$. The diffusion coefficient has been selected to be as large as possible without obtaining numerical instabilities. These simulations both include CIRs of width 2$^{\circ}$ with a rarefaction region of 25$^{\circ}$ and slow and fast winds of 400 and 800 km/s respectively. The particles of velocity greater than the solar-wind velocity in Figure (\ref{cirnomom}) are those that have been accelerated by the CIR. In Figure (\ref{e182p5cir}) some of these particles have been accelerated by the momentum-diffusion effect. It is also worth noting that the spectrum of the suprathermal tail is \raise.17ex\hbox{$\scriptstyle\sim$}\,$v^{-5}$.
+
+\begin{figure}[h]
+\includegraphics[scale=0.4]{plot21_p2au.png}
+\caption{The log-log plot of the distribution function at 0.2 AU versus velocity (normalized to the solar-wind velocity). This simulation was run without momentum diffusion with a CIR of width 2$^{\circ}$ with a rarefaction region of 25$^{\circ}$ The slow and fast wind speeds for this simulation were 400 and 800 km/s respectively.   \label{cirnomom}}
+\end{figure}
+
+\begin{figure}[h]
+\includegraphics[scale=0.4]{large_e18_2p5_f21_p2au.png}
+\caption{The log-log plot of the distribution function at 0.2 AU versus velocity (normalized to the solar-wind velocity). This simulation was run with momentum diffusion ($\alpha = 2.5$ and the diffusion coefficient is \raise.17ex\hbox{$\scriptstyle\sim$}\,1.7$\times 10^{-14}$ (m/s)$^{\frac{1}{2}}$). The CIR in this simulation had a width of 2$^{\circ}$ with a rarefaction region of 25$^{\circ}$ The slow and fast wind speeds for this simulation were 400 and 800 km/s respectively.  \label{e182p5cir} }
+\end{figure}
+
+I next looked at the effect within the CIR.  I looked along the same field line in the same simulations, this time at 5 AU. The distributions shown in Figure (\ref{incirnomom}) and Figure(\ref{incire182p5}) are very similar, with a slight hardening of the spectra at the end of the thermal tail at just above the solar-wind velocity. A hardening of the spectra would be expected after the addition of momentum-diffusion as this effect will accelerate particles, especially within the thermal tail (as this region has a large slope). 
+
+\begin{figure}[h]
+\includegraphics[scale=0.4]{plot21_nocir_5au.png}
+\caption{This figure is the same as Figure (\ref{cirnomom}) except that the field line is traced to 5 AU. \label{incirnomom}}
+\end{figure}
+
+\begin{figure}[h]
+\includegraphics[scale=0.4]{cir_21_5au_e8_2p5.png}
+\caption{This figure is the same as Figure (\ref{e182p5cir}) except that the field line is traced to 5 AU. \label{incire182p5}}
+\end{figure}
+
+The results for different choices of $\alpha$ are not significantly different. For example, Figure (\ref{3p5incir}) has the same simulation parameters as Figure (\ref{incire182p5}) except for $\alpha = 3.5$. In this case though, there is not much difference in the distribution.
+
+\begin{figure}[h]
+\includegraphics[scale=0.4]{cir_21_5au_e8_3p5.png}
+\caption{This figure is the same as Figure (\ref{incire182p5}) except that the diffusion coefficient parameter $\alpha = 3.5$ ($D \, \propto \,\, v^{1.5}$). \label{3p5incir}}
+\end{figure}
+
+Interesting results also occur for the case when there is no CIR. The momentum diffusion will accelerate particles to above the solar-wind velocity when there is no CIR. The simulation run corresponding to Figure (\ref{nocirnomom}) and Figure (\ref{nocirmom}) is the same as Figure (\ref{qtnocir}). Figure (\ref{nocirmom}) includes momentum diffusion with the same parameters used thus far. The results show acceleration of particles to above the solar-wind velocity. This is expected as the slope between the last two bins of the distribution function is very large in Figure (\ref{nocirnomom}) and therefore will have a large flux of particles associated with momentum diffusion. Momentum diffusion is a potential acceleration mechanism of particles when there is a steep slope in the distribution function.
+
+\begin{figure}[h]
+\includegraphics[scale=0.4]{plot25_1au.png}
+\caption{This plot shows the distribution function at 1 AU with no CIR included in the simulation. \label{nocirnomom}}
+\end{figure}
+
+\begin{figure}[h]
+\includegraphics[scale=0.4]{nocir_e18_2p8_f25_1au.png}
+\caption{This plot is the same as Figure (\ref{nocirnomom}) except with momentum-diffusion included. The momentum-diffusion parameters are the same as Figure (\ref{e182p5cir}).   \label{nocirmom}}
+\end{figure}
+
+The specific features of Figure (\ref{nocirmom}) are difficult to characterize, but are likely a consequence of competing processes (e.g. momentum-diffusion and adiabatic cooling). A full investigation of the acceleration of particles by momentum diffusion without a CIR is a consideration of future work.
+
+I then investigated the momentum diffusion where the velocity was normalized to the solar-wind velocity. When there was a CIR, the velocity was normalized to the local background solar-wind velocity. Again, I used a conservative value of $\alpha = 2.5$ which means the diffusion coefficient $D \, \propto \,\sqrt{v/u_{sw}}$. For this, I have found the diffusion coefficient is $\leq$\raise.17ex\hbox{$\scriptstyle\sim$}\,10 (m/s). Figure (\ref{cirmd}) shows the results of the same simulation as Figure (\ref{cirpuidist}), with momentum diffusion added (where $\alpha = 2.5$ and $D_0 \approx$ 10 (m/s) ).
+
+\begin{figure}[h]
+\includegraphics[scale=0.4]{cir_59_1au_e7_2p5.png}
+\caption{The plotted PUI distribution inside the compression region at 1 AU with momentum-diffusion included. This is best compared to Figure (\ref{cirpuidist}). \label{cirmd}}
+\end{figure}
+
+The result of this simulation is not significantly different than that of the simulation without momentum diffusion. The spectra of the tail of the distribution is not changed and only the shape of the distribution below the solar-wind velocity changes (slightly) in shape. When the power of the velocity dependence of the diffusion coefficient ($\alpha$) is increased, there is still no effect on the power-law of the distribution, only on the thermal population (see Figure (\ref{alpha4}) ). Again this affect is minor.
+
+\begin{figure}[h]
+\includegraphics[scale=0.4]{cir_59_1au_4.png}
+\caption{This figure is the same as Figure (\ref{cirmd}) except with $\alpha = 4$ ($D \, \propto \,v^2$). The only difference in the distributions is in the thermal part of the distribution. \label{alpha4}}
+\end{figure}
+
+It should be noted as well that in the case of the normalized velocity, there was not significant acceleration of particles when there was no CIR. This is unsurprising as the diffusion term will be small just above the solar-wind velocity when the velocity dependence is normalized. This result was found for various values of $\alpha$ as well. 
+
+\subsubsection{Discussion}
+
+The findings upon the initial investigation of the introduction of momentum diffusion into the EPREM code include:
+
+\begin{enumerate}
+
+	\item The dependence of the results on the power of the velocity ($\alpha$) has not been found to be strong and does not seem to affect the power-law spectra of the suprathermal tails inside of a CIR.
+
+	\item For the unnormalized velocity dependence of the diffusion coefficient, $D_0 \approx 1.7\times 10^{-14} (m/s)^{\frac{1}{2}}$ and for the normalized velocity dependence, $D_0 \approx 10 (m/s)$.
+
+	\item Momentum-diffusion is a potential acceleration mechanism for particles, most significantly when there is no CIR.
+
+\end{enumerate}
+
+These initial results are not a complete study of the code and many considerations should be made before this work could become a complete scientific study. Momentum-diffusion is an interesting effect to study as it has subtle implications on the results of the EPREM code but is regardless and important physical effect that determines the distribution of energetic particles in the heliosphere.     
+
+\subsection{Considerations and Future Work}
+
+This work is not complete as a comparison with observations has only been started. Furthermore, the goal of modeling the radial gradient of the power-law tail inside the CIR has just begun. This work has been to include momentum-diffusion into the EPREM code and to begin to analyze the results. It will take rigorous work to investigate the validity of this diffusion coefficient and to compare directly with various observations. The effect is small which is why momentum-diffusion has been previously ignored. Nonetheless, momentum-diffusion will eventually be a necessary improvement to the EPREM code.
+
+Another extension of this work would be to extend the simulation and after stead-state is reached, simulate a shock that propagates through the heliosphere. The results of this work could be directly compared with observations from SEP events and would be a great achievement if the results are correct.    
+
+There are a few considerations to be made about the current model. First is that the momentum-diffusion term is a term that affects the isotropic part of the distribution. Though the distribution is mostly isotropic, the momentum-diffusion is calculated without separating the isotropic distribution first. This approximation may not be valid and it is a next step to investigate this. Future work will look to either do the calculation on the isotropic part of the distribution or demonstrate that the affect from the anisotropic part of the distribution is negligible. Second is an investigation into the numerical instabilities that occur for large diffusion coefficients. The results may therefore be limited in that we cannot investigate a larger diffusion coefficient. Future investigation will have to address this in order to investigate the details of larger diffusion coefficients. The results of these calculations will likely be more enlightening to the effect on the power-law tails of the suprathermal distribution.    
+
+It is also important to note that the diffusion coefficient has been proposed, but may not be physically correct. That the model is adaptable to different diffusion coefficients. Though I have investigated the velocity dependence, radial dependence, or no dependence on either of these parameters could be a suitable diffusion coefficient. In this way, the addition of momentum-diffusion to the EPREM code will prove useful regardless of the correct diffusion coefficient.
+
+
+% \section{Appendix}
+% This is to be a resource to complete the broad survey of heliosphereic physics where the derivations do not demonstrate value to this particular text, but are important results of the field.
+
+
+
+
+\subsection{Glossary}
+
+\begin{itemize}
+
+\item \textbf{convective instability} - The convective instability occurs when the temperature gradient is larger than that of an adiabatic process. The instability limit for the gradient of the temperature can be derived \cite{moaz}, but this will not be included in this work.
+
+\item \textbf{Debye length} - The scale length at which a plasma is approximately neutral.
+
+\item \textbf{magnetic reconnection} - The process by which the topology of magnetic-field lines changes.
+
+\item \textbf{phase-space} - The 6-dimensional space of position and velocity (with 3 spacial and 3 velocity dimensions)
+
+\item \textbf{quiet-time} - Quiet-time simulations do not include any solar flare or CMEs, only the background solar wind.
+
+\item \textbf{suprathermal ion tails} - The distribution of ions that are above the solar-wind velocity. This is the ``tail end" of the distribution.
+
+
+\end{itemize}
+
+
+
+\begin{thebibliography}{22}
+
+\bibitem{nasacost} F. Odenwald, Sten \& Green, James. (2007). Forecasting the impact of an 1859-caliber superstorm on geosynchronous Earth-orbiting satellites: Transponder resources. Space Weather-the International Journal of Research and Applications - SPACE WEATHER. 5. 10.1029/2006SW000262. 
+
+\bibitem{dynamo} Higgins, Paul (2012): Schematic of the Solar Dynamo. figshare. Figure. doi: https://doi.org/10.6084/m9.figshare.102094.v1
+
+\bibitem{fulldynamo} Schematic of solar flux-transport dynamo processes. High Altitude Obsrvatory (HAO). Accessed May 2018. Online: https://www2.hao.ucar.edu/hao-science/Sun-dynamo-0.
+
+\bibitem{parker65} Parker, E. N. (1965), Dynamical Theory of the Solar Wind, Space Science Reviews, Volume 4, Issue 5-6, pp. 666-708.
+
+\bibitem{swsolsfig} Steven Cranmer. LASP CU Boulder. Accessed May 2018, Online: http://lasp.colorado.edu/~cranmer/Old\_Press/lambert\_2004.html
+
+\bibitem{foc1} Ruffolo, D. (1995), Effect of adiabatic deceleration on the focused transport of solar cosmic rays, Astrophys. J., 442(2), 861–874.
+
+\bibitem{foc2} Skilling, J. (1971), Cosmic rays in galaxy-Convection or diffusion, Astrophys. J., 170(2), 265.
+
+\bibitem{pitchangle}  Ashok K. Singal (2016), Radiation reaction and pitch-angle changes for a charge undergoing synchrotron losses, Mon. Not. Roy. Astron. Soc. 458 doi:10.1093/mnras/stw349.
+
+\bibitem{jokipiiandparker} Jokipii, J. R. \& Parker, E. N. (1970), On the Convection, Diffusion, and Adiabatic Deceleration of Cosmic Rays in the Solar Wind, Astrophysical Journal, vol. 160, p.735
+
+\bibitem{ISOISpaper} McComas, D.J., Alexander, N., Angold, N. et al. (2016) Space Sci Rev, 204: 187. hA. R. Bell; The acceleration of cosmic rays in shock fronts – I, Monthly Notices of the Royal Astronomical Society, Volume 182, Issue 2, 1 February 1978, Pages 147–156, https://doi.org/10.1093/mnras/182.2.147
+
+\bibitem{diffshock} A. R. Bell; The acceleration of cosmic rays in shock fronts – I, Monthly Notices of the Royal Astronomical Society, Volume 182, Issue 2, 1 February 1978, Pages 147–156, https://doi.org/10.1093/mnras/182.2.147
+
+\bibitem{injection} N. A. Schwadron and M. A. Lee and D. J. McComas (2008), Diffusive Acceleration at the Blunt Termination Shock, The Astrophysical Journal, Volume 675, Issue 2, pp. 1584-1600.
+
+\bibitem{cirshocks} Observations of interaction regions and corotating shocks between one and five AU: Pioneers 10 and 11 (1976), Geophys. Res. Lett. Volume 3, Issue 3, pp. 0094-8276, doi:10.1029/GL003i003p00137
+
+\bibitem{ciraccel} Fisk, L. A. \& Lee, M. A. (1980), Shock acceleration of energetic particles in corotating interaction regions in the solar wind, Astrophysical Journal, Part 1, vol. 237, Apr. 15, 1980, p. 620-626.
+
+\bibitem{Giacalone2002} Giacalone, J., J. R. Jokipii, and J. Kota (2002), Particle acceleration in solar wind compression regions, Astrophys. J., 573(2), 845–850.
+
+\bibitem{chen} Chen, J. H., N. A. Schwadron, E. Möbius,and M. Gorby (2015), Modeling interstellar pickup ion distributions in corotating interaction regions inside 1 AU, J. Geophys. Res. Space Physics, 120, 9269-9280, doi:10.1002/2014JA020939.
+
+\bibitem{Jokipii and Lee 2010} R. Jokipii and Martin A. Lee (2010), ApJ 713 475
+
+\bibitem{ismtemp} E. Möbius et al. (2015) J. Phys.: Conf. Ser. 577, 012019
+
+\bibitem{ismold} M. Witte. (2004), Kinetic parameters of interustellar neutral helium: Review of results obtained during one solar cycle with the Ulysses/GAS-instrument, Astronomy and Astrophysics 426, 835\textemdash 844. doi: 10.1051/0004-6361:20035956
+
+\bibitem{vminus5} Gloeckler G. (2003) AIP Conf. Ser. 679, Solar Wind Ten ed M. Velli et al (Melville, NY: AIP) 583
+
+\bibitem{nathan96} Schwadron N. A. Fisk L. A. Gloeckler G. (1996), Statistical acceleration of interstellar pick\textemdash up ions in co\textemdash rotating interaction regions, Geophys. Res. Lett. Volume 23, Issue 21, pp. 0094-8276 doi:10.1029/96GL02833
+
+\bibitem{EPREM} Kozarev, K. A., N. A. Schwadron, L. W. Townsend, R. Hatcher, M. Desai, M. Al\textemdash Dayeh, and R. Squier (2009), The Earth\textemdash Moon\textemdash Mars Radiation Environment Module (EMMREM): Framework and current developments, AIP Conf. Proc., 1121, 164. 
+
+\bibitem{moaz} Moaz, D. (2007), Astrophysics ina Nutshell. Princeton University Press. ISBN: 9780691125848.
+
+\end{thebibliography}
+
+% @book{maoz2007astrophysics,
+%   title={Astrophysics in a Nutshell},
+%   author={Maoz, D.},
+%   isbn={9780691125848},
+%   lccn={2006050588},
+%   series={In a Nutshell},
+%   url={https://books.google.com/books?id=UTytFkQTLFkC},
+%   year={2007},
+%   publisher={Princeton University Press}
+% }
+
+
+
+
+
+
+
+
+% \section{Appendix}
+
+
+
+
+% The form of momentum-diffusion [Jokipii and Lee 2010]:
+% \begin{equation}
+%     \frac{\partial f}{\partial t} = 
+%     \frac{1}{v^2} \frac{\partial}{\partial v} [Qv^2 D \frac{\partial f}{\partial v}]
+% \end{equation}
+
+
+% \begin{equation}
+%     \frac{\partial f}{\partial t} = 
+%     \vec{\nabla}_v \cdot (D \frac{\partial f}{\partial v})
+% \end{equation}
+
+
+% where:
+% \begin{equation}
+%     D \, \propto \,v^{\alpha - 2}
+% \end{equation}
+
+
+
+
+% g(E) is the particle 'distribution' as a function of energy
+
+% \begin{equation}
+%     \frac{dN}{dE}dE = g(E)dE = f(v) 4 \pi v^2 dv
+% \end{equation}
+
+% in order to work with g(E) we need to make the substituation:
+
+% \begin{equation}
+%     f(v) =  g(E) (4 \pi v^2)^{-1}  \frac{dE}{dv}
+% \end{equation}
+
+
+
+% \begin{equation}
+%     \frac{\partial}{\partial t} ( \frac{1}{4 \pi v^2} \frac{dE}{dv} g) = \frac{1}{v^2} \frac{\partial}{\partial v} [v^2 D \frac{\partial}{\partial v} (\frac{1}{4 \pi v^2}) \frac{\partial f}{\partial v}]
+% \end{equation}
+
+% applying differentiation rules, we obtain an expression that only contains derivatives directly applied to E and g
+
+
+% % \begin{equation*}
+% %   \begin{multlined}
+% %     \frac{\partial}{\partial t} ( \frac{1}{4 \pi v^2} \frac{dE}{dv} g) =  \frac{1}{v^2} \{  g [ \frac{\partial (v^2 D)}{\partial v}(\frac{-2}{4 \pi v^3} \frac{\partial E}{\partial v} + \frac{1}{4 \pi v^2} \frac{\partial^2 E}{\partial v^2}) \\ + (v^2 D)  (\frac{3}{2 \pi v^4} \frac{\partial E}{\partial v} - \frac{1}{\pi v^3} \frac{\partial^2 E}{\partial v^2} + \frac{1}{4 \pi v^2} \frac{\partial^3 E}{\partial v^3}) ] \\ + \frac{\partial g}{\partial v} [\frac{\partial (v^2 D)}{\partial v}(\frac{1}{4 \pi v^2} \frac{\partial E}{\partial v}) + (v^2 D)(\frac{1}{2 \pi v^2}\frac{\partial^2 E}{\partial v^2} - \frac{1}{\pi v^3} \frac{\partial E}{\partial v})] \\ + \frac{\partial^2 g}{\partial v^2} [(v^2 D) (\frac{1}{4 \pi v^2} \frac{\partial E}{\partial v})]   \}
+% %  \end{multlined}
+% % \end{equation*}
+
+
+% To work in energy, and 
+% \begin{equation}
+%     \frac{\partial}{\partial v} = \frac{1}{E} \frac{\partial E}{\partial v} \frac{\partial g}{\partial ln(E)}
+% \end{equation}
+
+% after the substitution for D:
+
+% \begin{equation}
+%     D = K v^{\alpha - 2}
+% \end{equation}
+
+% and using the Newtonian approximation:
+
+% \begin{equation}
+%     E = \frac{1}{2} m v^2
+% \end{equation}
+
+% We obtain the final form of our equation
+
+
+% \begin{equation}
+%     \frac{\partial g}{\partial t} = K v^{\alpha - 4} [(2 - \alpha) g  + (2\alpha - 3) \frac{\partial g}{\partial ln(E)} + 2 \frac{\partial^2 g}{\partial ln(E)^2}]
+% \end{equation}
+
+\end{document}
+% ~/modeling/epremPlayground/after_SA/chen_cir_4/e6_2p5
+% ****** End of file apssamp.tex ******

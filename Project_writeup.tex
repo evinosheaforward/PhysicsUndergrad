@@ -1,0 +1,245 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb}
+
+\title{Group Theory in Quantum Mechanics: A Spin on Angular Momentum}
+\author{Evin O'Shea }
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+
+\section{Introduction}
+Group theory is an extremely important mathematical tool and foundation in much of modern physics. For a reader who is not familiar with the concepts of group theory and their applications to physics, some background about group theory and how it relates to operators (and thereby quantum mechanics) must be discussed first. Once the foundation of groups, lie groups and algebras, and operators is laid out, it will be more natural to understand why group theory is of key importance in physics.
+
+\section{An Introduction to Groups}
+
+The definition of a group is based on four axioms. The set of all elements in the group will be denoted as g:
+
+\begin{itemize}
+\item There is a multiplication operation such that multiplication of any two elements in the group results in an element of the group. T'' = TT' where T, T', T'' $\in$ g.
+\item The multiplication operator is associative. Meaning (TT')T'' = T(T'T'').
+\item $\exists$ an ``identity element" E $\in$ g such that TE = ET = T
+\item $\forall$ T $\in$ g $\exists\: T^{-1} \in$ g such that $T^{-1}T$ = $TT^{-1}$ = E
+\end{itemize} 
+
+This basic definition provides the possibility for a lot of emergent mathematics. This is one of the four abstract algebraic objects. 
+
+\section{Representations of Groups}
+A representation of a group is a key idea in using group theory to understand quantum mechanics. The concept of a representation is that there are mathematical objects that can be mapped to from each element of a group that behave with the same relations as the elements of the group. The representation of an element of a group will be denoted $\Gamma (T)$ where $T \in g$. The representation must obey the following relation:
+
+\begin{equation}
+\Gamma (TT') = \Gamma (T) \Gamma (T')
+\end{equation}
+
+The most common type of representations are square matrices; however, differential operators can also form representations of groups. Both of these are useful in quantum mechanics and will be revisited later. The connection to quantum mechanics is first relevant here. The operators that correspond to observables in quantum mechanics can be framed as representations of groups. Knowledge of these groups corresponds to knowledge about the operators. 
+
+
+\section{Lie Groups and Lie Algebras}
+Lie groups and lie algebras are of particular interest in physics because they map to the operators which correspond to observables in quantum mechanics. The precise definition of a lie group is quite complicated, but starting with the idea of a lie algebra can help those who have seen the lie bracket (or commutator) before.
+
+\subsection{Lie Algebras}
+A lie algebra, on the other hand, has a simpler definition. A lie algebra is a vector space with an operation called the lie bracket. This operation is written as [a, b].
+
+\begin{equation}
+[a, b] \in L \quad \forall  a, b \in L
+\end{equation}
+
+While there is more to the formalism of how the lie bracket acts mathematically, this basic understanding should be sufficient. A lie algebra is comprised of elements for which the above is true. This, however, does not form a group as the lie bracket is not associative. A lie group will be formed from its corresponding lie algebra.
+
+For operators, the lie bracket is called the commutator. It is defined as:
+\begin{equation}
+[a, b] = ab - ba
+\end{equation} 
+If [a, b] = 0, this means a and b commute. Though students who have taken a semester of quantum mechanics have seen the commutator, the mathematics behind lie groups and lie algebras is not thoroughly addressed. Learning about the nature of these mathematics sheds light on a different framework for quantum mechanics.
+
+\subsection{Lie Groups}
+Before the idea of a lie group can be introduced, the matrix exponential must first be defined. The function is defined by the Taylor series for the exponential:
+\begin{equation}
+exp(a) = \sum_{n=1}^{\infty} \frac{1}{n!} a^{n}
+\end{equation}
+
+With this notion of the matrix exponential, we can define a lie group. All of the elements of a lie group can be formed from the exponentiation of the elements of the corresponding lie algebra. If a $\in$ L, then exp(ax) $\in$ g. Here, x is a parameter that can go from $-\infty$ to $\infty$. Modifying the parameter will give a new element of the lie group. Though this is not a very formal definition, it does explicitly show the relationship between a lie group and a lie algebra. The remaining theory behind lie algebras and lie groups is extraordinarily vast. This brief introduction should suffice for the purposes of explaining the formulation of angular momentum in quantum mechanics.
+
+
+\section{The Importance of Group Theory in Physics}
+The importance of groups in physics is that operators form groups. In quantum mechanics, the eigenvalues of operators correspond to observables. If we can understand operators mathematically, we can better understand this extremely wonderful model for quantum physics. At first glance it seems as though quantum physics is all about states. Classical intuition is that observables correspond to properties of an object (mass, momentum, etc.). In quantum mechanics, measurement of a state forces it into an eigenstate. The state would no longer be in a superposition if it was before measurement. This happens probabilistically, depending on the state of the system before measurement. The measurement will yield the eigenvalue associated with the resultant eigentstate of the operator that the given measurement corresponds to. This leads students to the idea that now, states are the most important piece of information about a system. If one knows the state, they know everything about the system. While this is a reasonable shift in thinking to make, there is much more to the given quantum mechanical system. The essence of quantum mechanics is that operators correspond to classical observables (as the measurement process itself is treated as an \textit{operation}). With the introduction of group theory, the nature of the operators themselves can tell a great deal about quantum systems and how they behave. 
+
+Angular momentum, especially in the hydrogen atom, is a great example of the how operators are more important than states. Imagine that an electron in an atom has a given state that is an eigenstate of angular momentum in the z-direction, total angular momentum, and energy. It now seems that this is a wonderful piece of information; however, we only know about \textit{one state} in the hydrogen atom. If we look more broadly at the operators of angular momentum and energy, we would realize that understanding the whole picture involves knowing about more than just one state. We need to know all of the possible states to fully understand a quantum mechanical system. This can be done with group theory. The mathematics behind the operators themselves can tell us an extraordinary amount about the eigenvalues and eigenbasis of operators. We can then use this understanding to frame not just the one quantum system of an electron in the 1s state of hydrogen, but rather the scheme for the periodic table. It is very enlightening to see that the eigenvectors of operators come from the operators themselves naturally. An understanding of current physics can be gained with the knowledge of the groups that are comprised of various operators. Furthermore, one can model new physics with groups.
+
+
+\section{Angular Momentum}
+This section will formally introduce angular momentum. First, the relationships between the angular momentum operators will be shown and discussed. Then, raising and lowering operators that are analogous to the annihilation and creation operators will be introduced. Finally, the discussion of the understanding of all of the possibles of quantum mechanical angular momentum will be apparent and will be shown explicitly.
+
+\subsection{The Angular Momentum Operators}
+The angular momentum operators are simply denoted as $L_x$, $L_y$, and $L_z$. These three operators have the following commutation relations:
+
+\begin{equation}
+[L_x, L_y] = i\hbar L_z
+\end{equation}
+\begin{equation}
+[L_y, L_z] = i\hbar L_x
+\end{equation}
+\begin{equation}
+[L_z, L_x] = i\hbar L_y
+\end{equation}
+
+The angular momentum operators do not commute and therefore are not simultaneously observable (or simultaneously diagonalizeable). These operators are called the generators of rotation. This is because the exponentiation of these operators generates all of the elements of the (lie) group of rotations. These operators are fully described by the lie group SU(2), but they are isomorphic (see appendix) to SO(3) (the group of proper rotations in ${\rm I\!R}^3$). It makes sense that the operators corresponding to angular momentum are the generators of rotations. This is similar to the way that the momentum operator in position space is the generator of change in position given by:
+
+\begin{equation}
+P = -i\hbar\frac{\partial}{\partial x} 
+\end{equation}
+
+Now, we can construct the operator for the total angular momentum given by:
+
+\begin{equation}
+L^2 = L_{x}^2 + L_{y}^2 + L_{z}^2
+\end{equation}
+
+With commutation relations:
+
+\begin{equation}
+[L^2, L_x] = 0
+\end{equation}
+\begin{equation}
+[L^2, L_y] = 0
+\end{equation}
+\begin{equation}
+[L^2, L_z] = 0
+\end{equation}
+
+These relations show that the total angular momentum and the angular momentum in any one direction can be observed (or diagonalized) at the same time. The eigenvectors of $L^2$ and $L_z$ will be denoted by $\psi_{m}^{l}$.
+
+\subsection{The Ladder Operators}
+The raising and lowering operators (or ladder operators) for this scheme can be defined by:
+
+\begin{equation}
+L_+ = L_x + iL_y
+\end{equation}
+\begin{equation}
+L_- = L_x - iL_y
+\end{equation}
+
+These operators commute with $L^2$ as:
+
+\begin{equation}
+[L^2, L_{\pm}] = 0
+\end{equation}
+
+The ladder operators correspond to changing the angular momentum in the z-direction. Given the eigenvector $\psi_{m}$ of $L_z$ such that:
+
+\begin{equation}
+L_z\psi_{m} = m\psi_{m} 
+\end{equation}
+
+The raising and lowering operators will have the following implication:
+
+\begin{equation}
+L_z(L_{\pm}\psi_{m}) = (m \pm 1)(L_{\pm}\psi_{m})
+\end{equation}
+
+With this knowledge, the rest of the construct of angular momentum can be formulated.
+
+Let it also be noted here that:
+
+\begin{equation}
+L_-L_+ = L^2 - L_z^2 - L_z
+\end{equation}
+
+\begin{equation}
+L_+L_- = L^2 - L_z^2 + L_z
+\end{equation}
+
+As these relationships will be used in the formulation.
+
+\subsection{Quantum Angular Momentum}
+With the knowledge of the commutation relations of the angular momentum operators and the raising and lowering operators, we can create the full formulation of angular momentum.
+
+Now to discover where the angular momentum quantum numbers come from, the state $\psi_l$ will be considered, where now $l$ is the maximum eigenvalue for $L_z$ such that:
+
+\begin{equation}
+L_+\psi_{l} = 0 
+\end{equation}
+
+This would imply further that:
+
+\begin{equation}
+L_-L_+\psi_{l} = 0 
+\end{equation}
+
+\begin{equation}
+(L^2 - L_z^2 - L_z)\psi_{l} = 0 
+\end{equation}
+
+Since $l$ is the eigenvalue of $L_z$:
+
+\begin{equation}
+(L^2 - l^2 - l)\psi_{l} = 0 
+\end{equation}
+\begin{equation}
+(L^2)\psi_{l} = (l^2 + l)\psi_{l} = l(l + 1)\psi_{l}
+\end{equation}
+
+It has now been shown that if the maximum eigenvalue of $L_z$ is $l$, all eigenvalues of $L^2$ are $l(l + 1)$. Now there mush be the consideration that there is a bottom to this "ladder". Successive applications of $L_-$ to the state with the maximal eigenvalue of $L_z$ will give all of the eigenstates of $L_z$ for the given $l$. Let us consider the bottom of the latter denoted by:
+
+\begin{equation}
+(L_-)^k\psi_{l} 
+\end{equation}
+
+Where k must be an integer as it is the number of steps that have been taken to get from the top of the ladder to the bottom. Being the bottom of the ladder implies:
+
+\begin{equation}
+L_-\{(L_-)^k\psi_{l}\}  = 0 
+\end{equation}
+
+The same technique used for the top of the ladder is implied to yield a new result:
+
+\begin{equation}
+L_+L_-\{(L_-)^k\psi_{l}\}  = 0 
+\end{equation}
+\begin{equation}
+(L^2 - L_z^2 + L_z)\{(L_-)^k\psi_{l}\}  = 0 
+\end{equation}
+\begin{equation}
+(l(l + 1) - (l - k)^2 + (l - k))\{(L_-)^k\psi_{l}\} = 0 
+\end{equation}
+
+The solution to the above equation for k implies that $l = \frac{1}{2}k$. Since k is and integer, $l = 0, \frac{1}{2}, 1, \frac{3}{2}, 2...$ This result is important as it restricts the values of $l$, the quantum number for the total angular momentum. This gives the result that is often demonstrated in modern physics classes without justification. The eigenstates of angular momentum are:
+
+\begin{equation}
+L^2\psi_m^l = l(l + 1)\psi_m^l \quad l = 0, \frac{1}{2}, 1, \frac{3}{2}, 2... 
+\end{equation}
+\begin{equation}
+L_z\psi_m^l = m\psi_m^l \quad m = -l, -l + 1, ...\:l - 1, l
+\end{equation}
+
+Each value for $l$ corresponds to a different (irreducible) representation of SU(2). Since there are $2l + 1$ eigenstates, the representations must be $d x d$ matrices where $d = 2l + 1$. The most commonly seen representation is the $2 x 2$ Pauli spin matrices, corresponding to spin $\frac{1}{2}$ particles ($l = \frac{1}{2}$). The final important thing to discuss is half-integer versus integer total angular momentum states. The difference comes from the representations of SU(3) as differential operators. The differential operators can only be mapped to representations where $l$ is an integer. These representations are also (irreducible) representations of SO(3), the group of all proper rotations in ${\rm I\!R}^3$. The representations of the group of proper rations correspond to orbital angular momentum. For electrons in the hydrogen atom, the values of $l = 0, 1, 2$ correspond to the s, p and d sub-shells in the hydrogen atom. On the other hand, it is important to acknowledge that the half-integer $l$ representations can correspond to the intrinsic spin of fermions. The Pauli spin matrices correspond to the intrinsic spin of particles such as electrons (spin $\frac{1}{2}$).
+
+\section{Closing Remarks}
+It should now be clear that just the knowledge of the commutation relations of the operators in a group can reveal all of the possible eigenvalues of all of the representations of the group. This can correspond to a multitude of different sets of quantum numbers. The same ideas are used to formulate schemes for the elementary particles. Different sets of quantum numbers for elementary particles can be related though relationships between their operators. These operators can be put into the scheme of different groups to try to model the particles with the application of group theory. This is how the elementary particles are classified in the standard model. The importance of group theory in physics seems subtle until it is well understood. Only then is it clear that group theory is part of the \textit{basis} for quantum mechanics.
+
+
+
+\section{Appendix}
+Isomorphism: A one-to-one mapping from one group to another such that:
+\begin{equation}
+\psi(\alpha a + \beta b) = \alpha\psi (a) + \beta\psi (b) \quad \forall a, b \in L
+\end{equation}
+\begin{equation}
+\psi([a, b]) = [\psi (a), \psi (b)] \quad \forall a, b \in L
+\end{equation}
+
+
+
+\section{References}
+Cornwell, John F.. Techniques of Physics : Group Theory in Physics : An Introduction. Oxford, GB: Academic Press, 1997. ProQuest ebrary. Web. December 2016.
+
+
+This is a compilation of information throughout the Cornwell book. The information has been synthesized in a way that will address the necessary topics in a compact manner for the given audience. All information and definitions can be found in the book.
+
+
+
+
+\end{document}
